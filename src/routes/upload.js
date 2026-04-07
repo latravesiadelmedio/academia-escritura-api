@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const multer = require('multer');
 const AdmZip = require('adm-zip');
-const path = require('path');
-const fs = require('fs');
+const mime = require('mime-types');
 const Course = require('../models/Course');
+const CourseFile = require('../models/CourseFile');
 const { protect, adminOnly } = require('../middleware/auth');
 
 const storage = multer.memoryStorage();
@@ -11,17 +11,17 @@ const upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/zip' ||
-        file.mimetype === 'application/x-zip-compressed' ||
-        file.originalname.endsWith('.zip')) {
+    if (
+      file.mimetype === 'application/zip' ||
+      file.mimetype === 'application/x-zip-compressed' ||
+      file.originalname.endsWith('.zip')
+    ) {
       cb(null, true);
     } else {
       cb(new Error('Solo se aceptan archivos ZIP.'));
     }
   },
 });
-
-const UPLOADS_DIR = path.join(__dirname, '../../uploads/cursos');
 
 // POST /api/upload/:courseId — solo admin
 router.post('/:courseId', protect, adminOnly, upload.single('file'), async (req, res) => {
@@ -30,40 +30,37 @@ router.post('/:courseId', protect, adminOnly, upload.single('file'), async (req,
 
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Curso no encontrado.' });
-
     if (!req.file) return res.status(400).json({ message: 'No se recibió ningún archivo.' });
 
-    // Extraer zip en uploads/cursos/:courseId/
-    const destDir = path.join(UPLOADS_DIR, courseId);
-    if (fs.existsSync(destDir)) fs.rmSync(destDir, { recursive: true });
-    fs.mkdirSync(destDir, { recursive: true });
-
     const zip = new AdmZip(req.file.buffer);
-    zip.extractAllTo(destDir, true);
+    const entries = zip.getEntries();
 
-    // Buscar el index.html (puede estar en la raíz o en una subcarpeta)
-    const findIndex = (dir) => {
-      for (const entry of fs.readdirSync(dir)) {
-        const full = path.join(dir, entry);
-        if (entry === 'index.html') return full;
-        if (fs.statSync(full).isDirectory()) {
-          const found = findIndex(full);
-          if (found) return found;
-        }
+    // Eliminar archivos anteriores del curso
+    await CourseFile.deleteMany({ courseId });
+
+    let indexPath = null;
+
+    for (const entry of entries) {
+      if (entry.isDirectory) continue;
+
+      const filePath = entry.entryName;
+      const data = entry.getData();
+      const contentType = mime.lookup(filePath) || 'application/octet-stream';
+
+      await CourseFile.create({ courseId, filePath, contentType, data });
+
+      // Detectar el index.html (puede estar en raíz o subcarpeta)
+      if (!indexPath && filePath.endsWith('index.html')) {
+        indexPath = filePath;
       }
-      return null;
-    };
+    }
 
-    const indexPath = findIndex(destDir);
     if (!indexPath) {
-      fs.rmSync(destDir, { recursive: true });
+      await CourseFile.deleteMany({ courseId });
       return res.status(400).json({ message: 'No se encontró index.html en el ZIP.' });
     }
 
-    // URL relativa al index.html desde uploads/cursos/:courseId/
-    const relativePath = path.relative(UPLOADS_DIR, indexPath).replace(/\\/g, '/');
-    const contentUrl = `/uploads/cursos/${relativePath}`;
-
+    const contentUrl = `/api/files/${courseId}/${indexPath}`;
     await Course.findByIdAndUpdate(courseId, { contentUrl });
 
     res.json({ message: 'Contenido subido correctamente.', contentUrl });
@@ -72,11 +69,10 @@ router.post('/:courseId', protect, adminOnly, upload.single('file'), async (req,
   }
 });
 
-// DELETE /api/upload/:courseId — eliminar contenido subido
+// DELETE /api/upload/:courseId — eliminar contenido
 router.delete('/:courseId', protect, adminOnly, async (req, res) => {
   try {
-    const destDir = path.join(UPLOADS_DIR, req.params.courseId);
-    if (fs.existsSync(destDir)) fs.rmSync(destDir, { recursive: true });
+    await CourseFile.deleteMany({ courseId: req.params.courseId });
     await Course.findByIdAndUpdate(req.params.courseId, { contentUrl: '' });
     res.json({ message: 'Contenido eliminado.' });
   } catch (err) {
