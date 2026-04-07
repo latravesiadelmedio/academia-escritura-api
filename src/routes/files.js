@@ -26,8 +26,9 @@ const isMainFile = (filePath) =>
 router.get('/:courseId/*filePath', async (req, res) => {
   try {
     const { courseId } = req.params;
-    // Normalizar filePath: quitar slash inicial si lo hay
-    const filePath = (req.params.filePath || '').replace(/^\/+/, '');
+    // En Express 5, params con wildcard pueden ser array o string
+    const raw = req.params.filePath;
+    const filePath = (Array.isArray(raw) ? raw.join('/') : (raw || '')).replace(/^\/+/, '');
 
     console.log(`[files] courseId=${courseId} filePath=${filePath}`);
 
