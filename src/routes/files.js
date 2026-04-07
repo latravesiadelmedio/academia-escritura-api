@@ -21,10 +21,9 @@ const getCourseAccess = async (req, courseId) => {
 };
 
 // GET /api/files/:courseId/:filePath(*)
-router.get('/:courseId/*', async (req, res) => {
+router.get('/:courseId/*filePath', async (req, res) => {
   try {
-    const { courseId } = req.params;
-    const filePath = req.params[0];
+    const { courseId, filePath } = req.params;
 
     // Solo el index.html requiere verificación de acceso
     // Los assets (JS, CSS, imágenes) se sirven libremente una vez que
