@@ -28,7 +28,8 @@ router.get('/:courseId/*filePath', async (req, res) => {
     // Solo el index.html requiere verificación de acceso
     // Los assets (JS, CSS, imágenes) se sirven libremente una vez que
     // el index.html ha sido autorizado en el iframe
-    if (filePath === 'index.html' || filePath.endsWith('/index.html')) {
+    if (filePath === 'index.html' || filePath.endsWith('/index.html') ||
+        filePath === 'genially.html' || filePath.endsWith('/genially.html')) {
       const hasAccess = await getCourseAccess(req, courseId);
       if (!hasAccess) {
         return res.status(403).send('Sin acceso a este curso.');

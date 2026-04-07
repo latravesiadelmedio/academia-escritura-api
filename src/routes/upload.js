@@ -49,8 +49,8 @@ router.post('/:courseId', protect, adminOnly, upload.single('file'), async (req,
 
       await CourseFile.create({ courseId, filePath, contentType, data });
 
-      // Detectar el index.html (puede estar en raíz o subcarpeta)
-      if (!indexPath && filePath.endsWith('index.html')) {
+      // Detectar el HTML principal (index.html o genially.html)
+      if (!indexPath && (filePath.endsWith('index.html') || filePath.endsWith('genially.html'))) {
         indexPath = filePath;
       }
     }
