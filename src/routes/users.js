@@ -49,6 +49,30 @@ router.put('/:id/access', protect, adminOnly, async (req, res) => {
   }
 });
 
+// PUT /api/users/:id/certify — marcar/desmarcar curso como completado
+router.put('/:id/certify', protect, adminOnly, async (req, res) => {
+  try {
+    const { courseId } = req.body;
+    if (!courseId) return res.status(400).json({ message: 'courseId requerido.' });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado.' });
+
+    const completed = user.completedCourses.map(id => id.toString());
+    if (completed.includes(courseId)) {
+      user.completedCourses = user.completedCourses.filter(id => id.toString() !== courseId);
+    } else {
+      user.completedCourses.push(courseId);
+    }
+    await user.save();
+
+    const updated = await User.findById(user._id).populate('enrolledCourses', '_id title');
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // DELETE /api/users/:id — solo admin
 router.delete('/:id', protect, adminOnly, async (req, res) => {
   try {

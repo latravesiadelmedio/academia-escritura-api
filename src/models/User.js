@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
         ref: 'Course',
       },
     ],
+    completedCourses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+      },
+    ],
     passwordResetToken: String,
     passwordResetExpires: Date,
   },
