@@ -62,6 +62,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         isAdmin: user.isAdmin,
         enrolledCourses: user.enrolledCourses.map(c => c._id),
+        completedCourses: user.completedCourses.map(c => c.toString()),
       },
     });
   } catch (err) {
@@ -78,6 +79,7 @@ router.get('/me', protect, async (req, res) => {
       email: req.user.email,
       isAdmin: req.user.isAdmin,
       enrolledCourses: req.user.enrolledCourses,
+      completedCourses: req.user.completedCourses.map(c => c.toString()),
     },
   });
 });
