@@ -13,7 +13,22 @@ const filesRoutes = require('./routes/files');
 const app = express();
 
 app.set('trust proxy', 1); // Render corre detrás de un proxy
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:4173',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (ej. mobile apps, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    callback(new Error('No permitido por CORS'));
+  },
+}));
 app.use(express.json());
 
 const authLimiter = rateLimit({
