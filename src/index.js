@@ -12,6 +12,7 @@ const filesRoutes = require('./routes/files');
 
 const app = express();
 
+app.set('trust proxy', 1); // Render corre detrás de un proxy
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 app.use(express.json());
 
