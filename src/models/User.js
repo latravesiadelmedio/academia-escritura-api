@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema(
         ref: 'Course',
       },
     ],
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   { timestamps: true }
 );
