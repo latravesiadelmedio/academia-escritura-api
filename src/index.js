@@ -9,6 +9,7 @@ const courseRoutes = require('./routes/courses');
 const userRoutes = require('./routes/users');
 const uploadRoutes = require('./routes/upload');
 const filesRoutes = require('./routes/files');
+const articleRoutes = require('./routes/articles');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/articles', articleRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
