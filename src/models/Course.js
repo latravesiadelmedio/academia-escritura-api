@@ -41,6 +41,12 @@ const courseSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    startDates: [
+      {
+        date: { type: Date, required: true },
+        label: { type: String, default: '' },
+      },
+    ],
     objectives: [String],
     modules: [moduleSchema],
     includes: [String],
