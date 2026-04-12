@@ -12,7 +12,9 @@ const getCourseAccess = async (req, courseId) => {
     const user = await User.findById(decoded.id);
     if (!user) return false;
     if (user.isAdmin) return true;
-    return user.enrolledCourses.map(id => id.toString()).includes(courseId);
+    const enrolled = user.enrolledCourses.map(id => id.toString()).includes(courseId);
+    const completed = (user.completedCourses ?? []).map(id => id.toString()).includes(courseId);
+    return enrolled && !completed;
   } catch {
     return false;
   }
