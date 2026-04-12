@@ -2,11 +2,20 @@ const router = require('express').Router();
 const Course = require('../models/Course');
 const { protect, adminOnly } = require('../middleware/auth');
 
+// Filtra las fechas de inicio que ya pasaron (solo para vistas públicas)
+const filterExpiredDates = (course) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // comparar por día completo
+  const obj = course.toObject();
+  obj.startDates = (obj.startDates ?? []).filter(d => new Date(d.date) >= now);
+  return obj;
+};
+
 // GET /api/courses — público
 router.get('/', async (req, res) => {
   try {
     const courses = await Course.find({ published: true }).select('-geniallyUrl');
-    res.json(courses);
+    res.json(courses.map(filterExpiredDates));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -17,7 +26,7 @@ router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id).select('-geniallyUrl');
     if (!course) return res.status(404).json({ message: 'Curso no encontrado.' });
-    res.json(course);
+    res.json(filterExpiredDates(course));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
