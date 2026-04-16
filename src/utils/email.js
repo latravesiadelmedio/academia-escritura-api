@@ -41,4 +41,31 @@ const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
   });
 };
 
-module.exports = { sendPasswordResetEmail };
+const sendContactEmail = async ({ nombre, email, tema, mensaje }) => {
+  const transporter = createTransporter();
+
+  await transporter.sendMail({
+    from: `"La Travesía del Medio" <${process.env.EMAIL_USER}>`,
+    to: process.env.EMAIL_USER,
+    replyTo: email,
+    subject: `Contacto: ${tema || 'Nuevo mensaje'} — ${nombre}`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #292524;">
+        <h2 style="color: #92400e;">Nuevo mensaje de contacto</h2>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
+          <tr><td style="padding:6px 0; color:#78716c; width:100px;">Nombre</td><td style="padding:6px 0;"><strong>${nombre}</strong></td></tr>
+          <tr><td style="padding:6px 0; color:#78716c;">Email</td><td style="padding:6px 0;"><a href="mailto:${email}">${email}</a></td></tr>
+          ${tema ? `<tr><td style="padding:6px 0; color:#78716c;">Tema</td><td style="padding:6px 0;">${tema}</td></tr>` : ''}
+        </table>
+        <div style="background:#fafaf9; border:1px solid #e7e5e4; border-radius:8px; padding:16px; white-space:pre-wrap; line-height:1.6;">
+${mensaje}
+        </div>
+        <p style="font-size:12px; color:#a8a29e; margin-top:16px;">
+          Respondé directamente a este email para contactar a ${nombre}.
+        </p>
+      </div>
+    `,
+  });
+};
+
+module.exports = { sendPasswordResetEmail, sendContactEmail };

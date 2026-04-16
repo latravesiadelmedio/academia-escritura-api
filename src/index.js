@@ -10,6 +10,7 @@ const userRoutes = require('./routes/users');
 const uploadRoutes = require('./routes/upload');
 const filesRoutes = require('./routes/files');
 const articleRoutes = require('./routes/articles');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
