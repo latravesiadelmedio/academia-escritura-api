@@ -41,6 +41,35 @@ const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
   });
 };
 
+const sendVerificationEmail = async ({ to, name, verifyUrl }) => {
+  const transporter = createTransporter();
+
+  await transporter.sendMail({
+    from: `"La Travesía del Medio" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: 'Verificá tu cuenta — La Travesía del Medio',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #292524;">
+        <h2 style="color: #92400e;">La Travesía del Medio</h2>
+        <p>Hola <strong>${name}</strong>,</p>
+        <p>Gracias por registrarte. Para activar tu cuenta hacé clic en el botón:</p>
+        <p style="margin: 32px 0;">
+          <a href="${verifyUrl}"
+             style="background:#92400e;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:15px;">
+            Verificar mi cuenta
+          </a>
+        </p>
+        <p style="font-size:13px;color:#78716c;">
+          Si no creaste una cuenta, podés ignorar este mensaje.
+        </p>
+        <p style="font-size:13px;color:#78716c;">
+          O copiá este enlace: <a href="${verifyUrl}">${verifyUrl}</a>
+        </p>
+      </div>
+    `,
+  });
+};
+
 const sendContactEmail = async ({ nombre, email, tema, mensaje }) => {
   const transporter = createTransporter();
 
@@ -68,4 +97,4 @@ ${mensaje}
   });
 };
 
-module.exports = { sendPasswordResetEmail, sendContactEmail };
+module.exports = { sendPasswordResetEmail, sendVerificationEmail, sendContactEmail };

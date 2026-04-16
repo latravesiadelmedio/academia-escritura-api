@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
-const { sendPasswordResetEmail } = require('../utils/email');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../utils/email');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -20,21 +20,48 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Ya existe una cuenta con ese email.' });
     }
 
-    const user = await User.create({ name, email, password });
-    const token = signToken(user._id);
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        enrolledCourses: user.enrolledCourses,
-      },
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const user = await User.create({
+      name,
+      email,
+      password,
+      emailVerified: false,
+      emailVerificationToken: crypto.createHash('sha256').update(rawToken).digest('hex'),
     });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const verifyUrl = `${frontendUrl}/verify-email/${rawToken}`;
+
+    try {
+      await sendVerificationEmail({ to: user.email, name: user.name, verifyUrl });
+    } catch {
+      await User.findByIdAndDelete(user._id);
+      return res.status(500).json({ message: 'No se pudo enviar el email de verificación. Intentá de nuevo.' });
+    }
+
+    res.status(201).json({ message: 'Cuenta creada. Revisá tu email para verificarla.' });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// GET /api/auth/verify-email/:token
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const hashed = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({ emailVerificationToken: hashed });
+
+    if (!user) {
+      return res.status(400).json({ message: 'El enlace es inválido o ya fue usado.' });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ message: 'Email verificado correctamente. Ya podés iniciar sesión.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -50,6 +77,10 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email }).select('+password').populate('enrolledCourses', '_id title');
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Email o contraseña incorrectos.' });
+    }
+
+    if (!user.isAdmin && !user.emailVerified) {
+      return res.status(403).json({ message: 'Debés verificar tu email antes de iniciar sesión. Revisá tu bandeja de entrada.' });
     }
 
     const token = signToken(user._id);
