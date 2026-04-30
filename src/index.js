@@ -13,6 +13,25 @@ const filesRoutes = require('./routes/files');
 const articleRoutes = require('./routes/articles');
 const contactRoutes = require('./routes/contact');
 const menuRoutes = require('./routes/menu');
+const MenuSection = require('./models/MenuSection');
+
+const DEFAULT_SECTIONS = [
+  { title: 'Cursos Online',          description: 'Talleres y cursos de escritura creativa a tu ritmo.',                    emoji: '🎓', slug: 'cursos',              order: 0 },
+  { title: 'Corrección de textos',   description: 'Revisión profesional de tesis y textos académicos.',                    emoji: '✏️', slug: 'servicios',           order: 1 },
+  { title: '¿Qué leer?',             description: 'Recomendaciones y listas de lectura literaria.',                         emoji: '📖', slug: 'que-leer',            order: 2 },
+  { title: 'Agenda Literaria',       description: 'Eventos, ferias y actividades del mundo literario.',                    emoji: '📅', slug: 'agenda',              order: 3 },
+  { title: 'Blog literario',         description: 'Reflexiones sobre escritura, lectura y literatura.',                    emoji: '🖋️', slug: 'blog',                order: 4 },
+  { title: 'Por dónde empezar',      description: 'Una guía para quienes llegan por primera vez.',                         emoji: '🧭', slug: 'por-donde-empezar',   order: 5 },
+  { title: 'Disparadores',           description: 'Consignas para ejercitar la escritura sin presión.',                    emoji: '⚡', slug: 'disparadores',        order: 6 },
+];
+
+const seedMenu = async () => {
+  const count = await MenuSection.countDocuments();
+  if (count === 0) {
+    await MenuSection.insertMany(DEFAULT_SECTIONS);
+    console.log('Secciones del menú inicializadas.');
+  }
+};
 
 const app = express();
 
@@ -63,8 +82,9 @@ const PORT = process.env.PORT || 4000;
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => {
+  .then(async () => {
     console.log('Conectado a MongoDB');
+    await seedMenu();
     app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
   })
   .catch(err => {
