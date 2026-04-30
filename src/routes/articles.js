@@ -54,6 +54,17 @@ router.get('/all', protect, adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/articles/:id — público
+router.get('/:id', async (req, res) => {
+  try {
+    const article = await Article.findOne({ _id: req.params.id, published: true });
+    if (!article) return res.status(404).json({ message: 'Artículo no encontrado.' });
+    res.json(article);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST /api/articles/upload-cover — sube miniatura, devuelve URL
 router.post('/upload-cover', protect, adminOnly, upload.single('cover'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No se recibió ninguna imagen.' });
