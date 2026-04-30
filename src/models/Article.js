@@ -13,12 +13,16 @@ const articleSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['disparador', 'blog'],
+      enum: ['disparador', 'blog', 'que-leer', 'agenda', 'por-donde-empezar', 'servicios'],
       default: 'disparador',
     },
     coverImage: {
       type: String,
       default: '',
+    },
+    eventDate: {
+      type: Date,
+      default: null,
     },
     published: {
       type: Boolean,
