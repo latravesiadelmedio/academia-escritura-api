@@ -1,11 +1,15 @@
 const router = require('express').Router();
 const path = require('path');
+const fs = require('fs');
 const multer = require('multer');
 const Article = require('../models/Article');
 const { protect, adminOnly } = require('../middleware/auth');
 
+const coversDir = path.join(__dirname, '../../uploads/covers');
+fs.mkdirSync(coversDir, { recursive: true });
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads/covers')),
+  destination: (req, file, cb) => cb(null, coversDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `cover-${Date.now()}${ext}`);
