@@ -1,28 +1,33 @@
 const router = require('express').Router();
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
+const { Readable } = require('stream');
+const cloudinary = require('cloudinary').v2;
 const Article = require('../models/Article');
 const { protect, adminOnly } = require('../middleware/auth');
 
-const coversDir = path.join(__dirname, '../../uploads/covers');
-fs.mkdirSync(coversDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, coversDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `cover-${Date.now()}${ext}`);
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Solo se permiten imágenes.'));
   },
 });
+
+const uploadToCloudinary = (buffer, folder) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, transformation: [{ quality: 'auto', fetch_format: 'auto' }] },
+      (err, result) => err ? reject(err) : resolve(result)
+    );
+    Readable.from(buffer).pipe(stream);
+  });
 
 // GET /api/articles — público, solo publicados, filtro por category opcional
 router.get('/', async (req, res) => {
@@ -65,11 +70,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/articles/upload-cover — sube miniatura, devuelve URL
-router.post('/upload-cover', protect, adminOnly, upload.single('cover'), (req, res) => {
+// POST /api/articles/upload-cover — sube a Cloudinary, devuelve URL
+router.post('/upload-cover', protect, adminOnly, upload.single('cover'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No se recibió ninguna imagen.' });
-  const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
-  res.json({ url: `${baseUrl}/uploads/covers/${req.file.filename}` });
+  try {
+    const result = await uploadToCloudinary(req.file.buffer, 'academia/covers');
+    res.json({ url: result.secure_url });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al subir imagen.' });
+  }
 });
 
 // POST /api/articles
