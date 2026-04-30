@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,6 +12,7 @@ const uploadRoutes = require('./routes/upload');
 const filesRoutes = require('./routes/files');
 const articleRoutes = require('./routes/articles');
 const contactRoutes = require('./routes/contact');
+const menuRoutes = require('./routes/menu');
 
 const app = express();
 
@@ -29,6 +31,7 @@ app.use(cors({
   },
 }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -45,6 +48,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/menu', menuRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

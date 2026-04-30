@@ -11,6 +11,15 @@ const articleSchema = new mongoose.Schema(
       type: String,
       required: [true, 'La descripción es obligatoria'],
     },
+    category: {
+      type: String,
+      enum: ['disparador', 'blog'],
+      default: 'disparador',
+    },
+    coverImage: {
+      type: String,
+      default: '',
+    },
     published: {
       type: Boolean,
       default: true,
