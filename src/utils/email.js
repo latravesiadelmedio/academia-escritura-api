@@ -1,21 +1,12 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM = 'La Travesía del Medio <noreply@latravesiadelmedio.com>';
 
 const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
-  const transporter = createTransporter();
-
-  await transporter.sendMail({
-    from: `"La Travesía del Medio" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: FROM,
     to,
     subject: 'Recuperar contraseña — La Travesía del Medio',
     html: `
@@ -31,7 +22,7 @@ const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
           </a>
         </p>
         <p style="font-size:13px;color:#78716c;">
-          Si no solicitaste esto, podés ignorar este mensaje. Tu contraseña no cambiará.
+          Si no solicitaste esto, podés ignorar este mensaje.
         </p>
         <p style="font-size:13px;color:#78716c;">
           O copiá este enlace: <a href="${resetUrl}">${resetUrl}</a>
@@ -42,10 +33,8 @@ const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
 };
 
 const sendVerificationEmail = async ({ to, name, verifyUrl }) => {
-  const transporter = createTransporter();
-
-  await transporter.sendMail({
-    from: `"La Travesía del Medio" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: FROM,
     to,
     subject: 'Verificá tu cuenta — La Travesía del Medio',
     html: `
@@ -71,10 +60,8 @@ const sendVerificationEmail = async ({ to, name, verifyUrl }) => {
 };
 
 const sendContactEmail = async ({ nombre, email, tema, mensaje }) => {
-  const transporter = createTransporter();
-
-  await transporter.sendMail({
-    from: `"La Travesía del Medio" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: FROM,
     to: process.env.EMAIL_USER,
     replyTo: email,
     subject: `Contacto: ${tema || 'Nuevo mensaje'} — ${nombre}`,
