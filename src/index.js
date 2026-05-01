@@ -71,21 +71,6 @@ app.use('/api/menu', menuRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-app.get('/api/setup-admin', async (req, res) => {
-  try {
-    const bcrypt = require('bcryptjs');
-    const User = require('./models/User');
-    const hash = await bcrypt.hash('admin2026', 10);
-    await User.findOneAndUpdate(
-      { email: 'latravesiadelmedio@gmail.com' },
-      { password: hash, isAdmin: true, emailVerified: true },
-      { upsert: true, new: true }
-    );
-    res.json({ message: 'Admin actualizado. Contraseña: admin2026' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
 
 app.use((req, res) => res.status(404).json({ message: 'Ruta no encontrada.' }));
 
