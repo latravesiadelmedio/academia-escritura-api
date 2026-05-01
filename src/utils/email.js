@@ -2,7 +2,7 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'La Travesía del Medio <onboarding@resend.dev>';
+const FROM = 'La Travesía del Medio <noreply@latravesiadelmedio.com>';
 
 const sendPasswordResetEmail = async ({ to, name, resetUrl }) => {
   await resend.emails.send({
