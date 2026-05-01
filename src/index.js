@@ -48,7 +48,8 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('No permitido por CORS'));
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    callback(null, false);
   },
 }));
 app.use(express.json());
